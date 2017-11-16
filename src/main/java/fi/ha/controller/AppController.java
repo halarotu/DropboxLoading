@@ -1,4 +1,4 @@
-package controller;
+package fi.ha.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +10,6 @@ public class AppController {
     @RequestMapping(value = "/kuvat", method = RequestMethod.GET)
     public String palautaKuva() {
 
-        return "";
+        return "main";
     }
 }
