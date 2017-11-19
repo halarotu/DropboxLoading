@@ -1,0 +1,22 @@
+#rotate {
+    -webkit-transform: rotate(90deg);
+}
+
+#left {
+    width:75%;
+    margin: 5px;
+}
+
+#right {
+    width: 15%px;
+    margin: 5px;
+}
+
+div {
+    height: 100%;
+    float: left;
+}
+
+h2 {
+    color: blue;
+}
