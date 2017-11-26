@@ -16,6 +16,10 @@ public class FileMetadataWrapper implements Comparable<FileMetadataWrapper> {
         return this.fileMetadata;
     }
 
+    public void setFileMetadata(FileMetadata metadata) {
+        this.fileMetadata = metadata;
+    }
+
     @Override
     public int compareTo(FileMetadataWrapper o) {
         Date date1 = this.fileMetadata.getClientModified();

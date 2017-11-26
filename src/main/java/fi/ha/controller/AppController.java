@@ -17,10 +17,14 @@ public class AppController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getImage(Model model) {
 
-        FileMetadata fileMetadata = loadingService.getFile();
+        FileMetadata fileMetadata;
+        if (loadingService.isAutoUpdateStopped()) {
+            fileMetadata = loadingService.getCurrentMetadata();
+        } else {
+            fileMetadata = loadingService.getFile();
+        }
         model.addAttribute("image", fileMetadata.getName());
-        model.addAttribute("date", fileMetadata.getMediaInfo().getMetadataValue().getTimeTaken().toString());
-        model.addAttribute("path", loadingService.getPath_To_Files());
+        model.addAttribute("date", fileMetadata.getMediaInfo().getMetadataValue().getTimeTaken());
 
         boolean rotate = false;
         if (fileMetadata.getMediaInfo().getMetadataValue().getDimensions().getHeight() >
@@ -28,7 +32,21 @@ public class AppController {
             rotate = true;
         }
         model.addAttribute("rotate", rotate);
+        model.addAttribute("autoupdate", !loadingService.isAutoUpdateStopped());
+        String buttonText = loadingService.isAutoUpdateStopped() ? "Jatka" : "Pysäytä tähän";
+        model.addAttribute("buttonText", buttonText);
 
         return "main";
+    }
+
+    @RequestMapping(value = "/startStop", method = RequestMethod.POST)
+    public String startStop() {
+        if (loadingService.isAutoUpdateStopped()) {
+            loadingService.setAutoUpdateStopped(false);
+        } else {
+            loadingService.setAutoUpdateStopped(true);
+        }
+
+        return "redirect:/";
     }
 }

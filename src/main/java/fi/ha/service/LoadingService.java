@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,13 +22,14 @@ public class LoadingService {
 
     @Value("${db.accessToken:default}")
     private String ACCESS_TOKEN;
-
-    private final String PATH_TO_FILES = "";
+    @Value("${db.path_to_files:default}")
+    private String PATH_TO_FILES;
     private final boolean IMMUTABLE_FOLDER = true;
 
     private DbxClientV2 client = null;
     private FileMetadataWrapper currentMetadata = null;
     private List<FileMetadataWrapper> currentSortedFileList = null;
+    private boolean autoUpdateStopped = false;
 
     public FileMetadata getFile() {
         try {
@@ -36,14 +38,36 @@ public class LoadingService {
                 this.deleteOldFile(this.currentMetadata.getFileMetadata());
             }
             this.currentMetadata = next;
+
+            Path pathToImages = FileSystems.getDefault().getPath("images");
+            if (!Files.exists(pathToImages)) {
+                Files.createDirectory(pathToImages);
+            }
             OutputStream out = new FileOutputStream("images/" + next.getFileMetadata().getName());
             FileMetadata fmd = this.getClient().files().downloadBuilder(next.getFileMetadata().getPathLower()).download(out);
+            this.currentMetadata.setFileMetadata(fmd);
 
             return fmd;
         } catch (Exception e) {
             System.out.println(e.toString());
         }
         return null;
+    }
+
+    public FileMetadata getCurrentMetadata() {
+        if (this.currentMetadata == null) {
+            return getFile();
+        } else {
+            return this.currentMetadata.getFileMetadata();
+        }
+    }
+
+    public void setAutoUpdateStopped(boolean stopped) {
+        this.autoUpdateStopped = stopped;
+    }
+
+    public boolean isAutoUpdateStopped() {
+        return this.autoUpdateStopped;
     }
 
     public String getPath_To_Files() {
@@ -96,6 +120,7 @@ public class LoadingService {
             }
             Collections.sort(fileMetadataList);
             this.currentSortedFileList = fileMetadataList;
+            System.out.println("File list retrieved with " + fileMetadataList.size() + " files.");
         }
 
         return this.currentSortedFileList;
