@@ -9,7 +9,7 @@
 
         <div id="left">
             <div th:if="${rotate}">
-                <img width="75%" id="rotate" th:src="${'images/' + image}"/>
+                <img width="80%" id="rotate" th:src="${'images/' + image}"/>
             </div>
             <div th:unless="${rotate}">
                 <img width="95%" th:src="${'images/' + image}"/>
@@ -17,7 +17,10 @@
         </div>
         <div id="right">
             <form th:action="@{/startStop}" method="POST">
-                <button id="stop-button" type="submit" th:text="${buttonText}"></button>
+                <button id="stop-button" type="submit" th:text="${stopButtonText}"></button>
+            </form>
+            <form th:action="@{/previous}" method="POST">
+                <button id="previous-button" type="submit" th:text="Edellinen"></button>
             </form>
             <div>
                 <h5 th:text="${image}">name</h5>
@@ -27,7 +30,7 @@
 
         <div th:if="${autoupdate}">
             <script>
-                setInterval(function() { location.reload(); }, 10000);
+                setInterval(function() { window.location = "http://localhost:8080"; }, 10000);
             </script>
         </div>
 

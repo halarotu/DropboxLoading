@@ -31,13 +31,9 @@ public class LoadingService {
     private List<FileMetadataWrapper> currentSortedFileList = null;
     private boolean autoUpdateStopped = false;
 
-    public FileMetadata getFile() {
+    public FileMetadata getFile(boolean previous) {
         try {
-            FileMetadataWrapper next = this.getNextMetadata();
-            if (this.currentMetadata != null) {
-                this.deleteOldFile(this.currentMetadata.getFileMetadata());
-            }
-            this.currentMetadata = next;
+            FileMetadataWrapper next = previous ? this.getPreviousMetadata() : this.getNextMetadata();
 
             Path pathToImages = FileSystems.getDefault().getPath("images");
             if (!Files.exists(pathToImages)) {
@@ -45,7 +41,16 @@ public class LoadingService {
             }
             OutputStream out = new FileOutputStream("images/" + next.getFileMetadata().getName());
             FileMetadata fmd = this.getClient().files().downloadBuilder(next.getFileMetadata().getPathLower()).download(out);
-            this.currentMetadata.setFileMetadata(fmd);
+
+            FileMetadataWrapper old = this.currentMetadata;
+            next.setFileMetadata(fmd);
+
+            if (old != null) {
+                this.deleteOldFile(old.getFileMetadata());
+            }
+            if (!this.autoUpdateStopped || previous) {
+                this.currentMetadata = next;
+            }
 
             return fmd;
         } catch (Exception e) {
@@ -55,11 +60,7 @@ public class LoadingService {
     }
 
     public FileMetadata getCurrentMetadata() {
-        if (this.currentMetadata == null) {
-            return getFile();
-        } else {
-            return this.currentMetadata.getFileMetadata();
-        }
+        return this.currentMetadata.getFileMetadata();
     }
 
     public void setAutoUpdateStopped(boolean stopped) {
@@ -74,6 +75,15 @@ public class LoadingService {
         return PATH_TO_FILES;
     }
 
+    public boolean rotateImage(FileMetadata fileMetadata) {
+        boolean rotate = false;
+        if (fileMetadata.getMediaInfo().getMetadataValue().getDimensions().getHeight() >
+                fileMetadata.getMediaInfo().getMetadataValue().getDimensions().getWidth()) {
+            rotate = true;
+        }
+        return rotate;
+    }
+
     private void deleteOldFile(Metadata metadata) {
         if (metadata != null) {
             try {
@@ -84,6 +94,19 @@ public class LoadingService {
         }
     }
 
+    private FileMetadataWrapper getPreviousMetadata() throws DbxException {
+        List<FileMetadataWrapper> metadataList = this.getFileList();
+        if (metadataList.isEmpty()) {return null;}
+
+        int nextIndex = 0;
+        if (this.currentMetadata != null && metadataList.contains(this.currentMetadata)) {
+            int index = metadataList.indexOf(this.currentMetadata);
+            index--;
+            nextIndex = (index < 0) ? metadataList.size() + index : index;
+        }
+        return metadataList.get(nextIndex);
+    }
+
     private FileMetadataWrapper getNextMetadata() throws DbxException {
         List<FileMetadataWrapper> metadataList = this.getFileList();
         if (metadataList.isEmpty()) {return null;}
@@ -92,11 +115,8 @@ public class LoadingService {
         if (this.currentMetadata != null && metadataList.contains(this.currentMetadata)) {
             int index = metadataList.indexOf(this.currentMetadata);
             index++;
-            if (index < metadataList.size()) {
-                nextIndex = index;
-            }
+            nextIndex = (index < metadataList.size()) ? index : 0;
         }
-
         return metadataList.get(nextIndex);
     }
 

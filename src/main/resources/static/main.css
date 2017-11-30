@@ -8,19 +8,27 @@
 
 #left {
     width:75%;
-    height: 90%;
     margin: 5px;
 }
 
 #right {
     width: 20%;
-    height: 90%;
+    height: 100%;
     margin: 5px;
 }
 
 #stop-button {
     width: 100%;
-    height: 40%;
+    height: 35px;
+}
+
+#previous-button {
+    width: 100%;
+    height: 35px;
+}
+
+button {
+    margin: 5px;
 }
 
 div {

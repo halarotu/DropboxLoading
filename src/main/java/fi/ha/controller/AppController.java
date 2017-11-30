@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AppController {
@@ -15,26 +17,23 @@ public class AppController {
     LoadingService loadingService;
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    public String getImage(Model model) {
+    public String getImage(@RequestParam(name = "previous", required = false) Boolean previous, Model model) {
 
         FileMetadata fileMetadata;
-        if (loadingService.isAutoUpdateStopped()) {
+        if (previous != null && previous) {
+            fileMetadata = loadingService.getFile(true);
+        } else if (loadingService.isAutoUpdateStopped()) {
             fileMetadata = loadingService.getCurrentMetadata();
         } else {
-            fileMetadata = loadingService.getFile();
+            fileMetadata = loadingService.getFile(false);
         }
-        model.addAttribute("image", fileMetadata.getName());
-        model.addAttribute("date", fileMetadata.getMediaInfo().getMetadataValue().getTimeTaken());
-
-        boolean rotate = false;
-        if (fileMetadata.getMediaInfo().getMetadataValue().getDimensions().getHeight() >
-                fileMetadata.getMediaInfo().getMetadataValue().getDimensions().getWidth()) {
-            rotate = true;
+        if (fileMetadata != null) {
+            model.addAttribute("image", fileMetadata.getName());
+            model.addAttribute("date", fileMetadata.getMediaInfo().getMetadataValue().getTimeTaken());
+            model.addAttribute("rotate", loadingService.rotateImage(fileMetadata));
         }
-        model.addAttribute("rotate", rotate);
         model.addAttribute("autoupdate", !loadingService.isAutoUpdateStopped());
-        String buttonText = loadingService.isAutoUpdateStopped() ? "Jatka" : "Pysäytä tähän";
-        model.addAttribute("buttonText", buttonText);
+        model.addAttribute("stopButtonText", loadingService.isAutoUpdateStopped() ? "Jatka" : "Pysäytä tähän");
 
         return "main";
     }
@@ -46,7 +45,12 @@ public class AppController {
         } else {
             loadingService.setAutoUpdateStopped(true);
         }
+        return "redirect:/";
+    }
 
+    @RequestMapping(value = "/previous", method = RequestMethod.POST)
+    public String getPrevious(RedirectAttributes redirectAttributes) {
+        redirectAttributes.addAttribute("previous", true);
         return "redirect:/";
     }
 }
