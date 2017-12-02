@@ -1,0 +1,47 @@
+#rotate {
+    -webkit-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    transform: rotate(90deg);
+}
+
+
+#nocontrolview {
+    background-color: black;
+    width: 100%;
+    float: none;
+}
+
+body {
+    background-color: black;
+}
+
+
+@media (max-width: 500px) {
+    #innervertical {
+        width: 425px;
+        display: table;
+        margin: 0 auto;
+    }
+
+    #innerhorizontal {
+        width: 480px;
+        display: table;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 501px) {
+     #innervertical {
+            width: 800px;
+            display: table;
+            margin: 0 auto;
+        }
+
+        #innerhorizontal {
+            width: 900px;
+            display: table;
+            margin: 0 auto;
+        }
+}

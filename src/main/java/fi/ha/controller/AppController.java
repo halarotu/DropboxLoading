@@ -16,7 +16,7 @@ public class AppController {
     @Autowired
     LoadingService loadingService;
 
-    @RequestMapping(value = "/", method = RequestMethod.GET)
+    @RequestMapping(value = "/control", method = RequestMethod.GET)
     public String getImage(@RequestParam(name = "previous", required = false) Boolean previous, Model model) {
 
         FileMetadata fileMetadata;
@@ -38,6 +38,24 @@ public class AppController {
         return "main";
     }
 
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public String getImageV2(Model model) {
+
+        FileMetadata fileMetadata;
+        if (loadingService.isAutoUpdateStopped()) {
+            fileMetadata = loadingService.getCurrentMetadata();
+        } else {
+            fileMetadata = loadingService.getFile(false);
+        }
+        if (fileMetadata != null) {
+            model.addAttribute("image", fileMetadata.getName());
+            model.addAttribute("rotate", loadingService.rotateImage(fileMetadata));
+        }
+        model.addAttribute("autoupdate", !loadingService.isAutoUpdateStopped());
+
+        return "main2";
+    }
+
     @RequestMapping(value = "/startStop", method = RequestMethod.POST)
     public String startStop() {
         if (loadingService.isAutoUpdateStopped()) {
@@ -45,12 +63,12 @@ public class AppController {
         } else {
             loadingService.setAutoUpdateStopped(true);
         }
-        return "redirect:/";
+        return "redirect:/control";
     }
 
     @RequestMapping(value = "/previous", method = RequestMethod.POST)
     public String getPrevious(RedirectAttributes redirectAttributes) {
         redirectAttributes.addAttribute("previous", true);
-        return "redirect:/";
+        return "redirect:/control";
     }
 }

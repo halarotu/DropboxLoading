@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
     <head>
-        <title th:text="${title}">title</title>
+        <title>Dropbox images</title>
 
         <link type="text/css" href="main.css" rel="stylesheet" />
     </head>
@@ -30,7 +30,7 @@
 
         <div th:if="${autoupdate}">
             <script>
-                setInterval(function() { window.location = "http://localhost:8080"; }, 10000);
+                setInterval(function() { window.location = "http://localhost:8080/control"; }, 10000);
             </script>
         </div>
 

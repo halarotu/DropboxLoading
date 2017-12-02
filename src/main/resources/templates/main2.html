@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dropbox images</title>
+
+    <link type="text/css" href="main2.css" rel="stylesheet" />
+</head>
+<body>
+
+<div id="nocontrolview">
+    <div id="innervertical" th:if="${rotate}">
+        <img width="100%" id="rotate" th:src="${'images/' + image}"/>
+    </div>
+    <div id="innerhorizontal" th:unless="${rotate}">
+        <img width="100%" th:src="${'images/' + image}"/>
+    </div>
+</div>
+
+<div th:if="${autoupdate}">
+    <script>
+        setInterval(function() { window.location = "http://localhost:8080"; }, 10000);
+    </script>
+</div>
+
+</body>
+</html>
