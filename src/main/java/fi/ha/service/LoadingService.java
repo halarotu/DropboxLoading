@@ -6,6 +6,7 @@ import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.*;
 import fi.ha.util.FileMetadataWrapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.FileOutputStream;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class LoadingService {
@@ -28,31 +30,44 @@ public class LoadingService {
 
     private DbxClientV2 client = null;
     private FileMetadataWrapper currentMetadata = null;
+    private long currentMetadataSetTime = 0;
+    private FileMetadataWrapper latestDownloadedMetadata = null;
     private List<FileMetadataWrapper> currentSortedFileList = null;
     private boolean autoUpdateStopped = false;
+    private boolean downloadInProgress = false;
 
-    public FileMetadata getFile(boolean previous) {
+    public FileMetadata getFileMetadata(boolean previous) {
         try {
-            FileMetadataWrapper next = previous ? this.getPreviousMetadata() : this.getNextMetadata();
-
-            Path pathToImages = FileSystems.getDefault().getPath("images");
-            if (!Files.exists(pathToImages)) {
-                Files.createDirectory(pathToImages);
+            FileMetadataWrapper old = null;
+            if (this.currentMetadata == null) {
+                CompletableFuture<Boolean> downloadFile = this.downloadFile(this.getNextMetadata());
+                CompletableFuture.allOf(downloadFile).join();
+                this.currentMetadata = this.latestDownloadedMetadata;
+                this.currentMetadataSetTime = System.currentTimeMillis();
+            } else if (previous) {
+                CompletableFuture<Boolean> downloadFile = this.downloadFile(this.getPreviousMetadata());
+                CompletableFuture.allOf(downloadFile).join();
+                old = this.currentMetadata;
+                this.currentMetadata = this.latestDownloadedMetadata;
+                this.currentMetadataSetTime = System.currentTimeMillis();
+            } else if (System.currentTimeMillis() - this.currentMetadataSetTime > 10000
+                    && !autoUpdateStopped) {
+                if (!this.currentMetadata.equals(this.latestDownloadedMetadata)) {
+                    old = this.currentMetadata;
+                    this.currentMetadata = this.latestDownloadedMetadata;
+                    this.currentMetadataSetTime = System.currentTimeMillis();
+                }
             }
-            OutputStream out = new FileOutputStream("images/" + next.getFileMetadata().getName());
-            FileMetadata fmd = this.getClient().files().downloadBuilder(next.getFileMetadata().getPathLower()).download(out);
-
-            FileMetadataWrapper old = this.currentMetadata;
-            next.setFileMetadata(fmd);
 
             if (old != null) {
                 this.deleteOldFile(old.getFileMetadata());
             }
-            if (!this.autoUpdateStopped || previous) {
-                this.currentMetadata = next;
+            if (this.currentMetadata.equals(this.latestDownloadedMetadata)) {
+                downloadFile(this.getNextMetadata());
             }
 
-            return fmd;
+            return this.currentMetadata.getFileMetadata();
+
         } catch (Exception e) {
             System.out.println(e.toString());
         }
@@ -84,6 +99,32 @@ public class LoadingService {
         return rotate;
     }
 
+    @Async
+    private CompletableFuture<Boolean> downloadFile(FileMetadataWrapper file) throws Exception {
+        boolean ok = false;
+        if (!downloadInProgress) {
+            downloadInProgress = true;
+            ok = true;
+            try {
+                Path pathToImages = FileSystems.getDefault().getPath("images");
+                if (!Files.exists(pathToImages)) {
+                    Files.createDirectory(pathToImages);
+                }
+                OutputStream out = new FileOutputStream("images/" + file.getFileMetadata().getName());
+                FileMetadata fmd = this.getClient().files().downloadBuilder(file.getFileMetadata().getPathLower()).download(out);
+
+                FileMetadataWrapper newMetadata = new FileMetadataWrapper(fmd);
+                this.latestDownloadedMetadata = newMetadata;
+            } catch (Exception e) {
+                System.out.println(e.toString());
+                ok = false;
+            }
+            downloadInProgress = false;
+        }
+        return CompletableFuture.completedFuture(ok);
+    }
+
+    @Async
     private void deleteOldFile(Metadata metadata) {
         if (metadata != null) {
             try {

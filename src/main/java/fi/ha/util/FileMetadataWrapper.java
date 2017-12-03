@@ -30,7 +30,7 @@ public class FileMetadataWrapper implements Comparable<FileMetadataWrapper> {
     @Override
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof FileMetadataWrapper) {
-            return this.fileMetadata.equals(((FileMetadataWrapper) obj).getFileMetadata());
+            return this.fileMetadata.getId().equals(((FileMetadataWrapper) obj).getFileMetadata().getId());
         }
         return false;
     }

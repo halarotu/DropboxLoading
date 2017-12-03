@@ -18,21 +18,21 @@ body {
 }
 
 
-@media (max-width: 500px) {
+@media (max-width: 800px) {
     #innervertical {
-        width: 425px;
+        width: 520px;
         display: table;
         margin: 0 auto;
     }
 
     #innerhorizontal {
-        width: 480px;
+        width: 610px;
         display: table;
         margin: 0 auto;
     }
 }
 
-@media (min-width: 501px) {
+@media (min-width: 801px) {
      #innervertical {
             width: 800px;
             display: table;

@@ -30,7 +30,7 @@
 
         <div th:if="${autoupdate}">
             <script>
-                setInterval(function() { window.location = "http://localhost:8080/control"; }, 10000);
+                setInterval(function() { window.location = window.location.href.split('?')[0]; }, 10000);
             </script>
         </div>
 

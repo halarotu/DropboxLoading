@@ -16,9 +16,17 @@
     </div>
 </div>
 
-<div th:if="${autoupdate}">
+<div>
     <script>
-        setInterval(function() { window.location = "http://localhost:8080"; }, 10000);
+        setInterval(function() {
+            var xhr = new window.XMLHttpRequest();
+            xhr.open('GET', window.location.href + "/stopped", false);
+            xhr.send();
+
+            if (xhr.responseText == "false") {
+              window.location = window.location.href;
+            }
+        }, 10000);
     </script>
 </div>
 
